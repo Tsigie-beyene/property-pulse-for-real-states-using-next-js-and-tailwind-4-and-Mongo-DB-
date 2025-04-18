@@ -1,9 +1,11 @@
 import Hero from "@/components/Hero";
 import InfoBoxes from "@/components/InfoBoxes";
 import HomeProperties from "@/components/HomeProperties";
+// import connectDB from "@/config/database";
 
 const HomePage = () => {
-    return <>
+//   connectDB(); // Connect to the database
+return <>
     
     <Hero />
     <InfoBoxes />
