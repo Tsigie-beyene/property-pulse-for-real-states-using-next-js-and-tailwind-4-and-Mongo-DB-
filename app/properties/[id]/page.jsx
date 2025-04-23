@@ -35,9 +35,6 @@ const PropertyPage = async({params}) => {
 
 </>
 
-
-
-
      );
 }
  
