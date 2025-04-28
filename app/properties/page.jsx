@@ -1,37 +1,57 @@
-import PropertyCard from '@/components/PropertyCard';
-import Property from '@/models/Property';
+import PropertyHeaderImage from '@/components/PropertyHeaderImage';
+import PropertyDetails from '@/components/PropertyDetails';
 import connectDB from '@/config/database';
+import Property from '@/models/Property';
+import PropertyImages from '@/components/PropertyImages';
+import BookmarkButton from '@/components/BookmarkButton';
+import ShareButtons from '@/components/ShareButtons';
+import PropertyContactForm from '@/components/PropertyContactForm';
+import { convertToSerializeableObject } from '@/utils/convertToObject';
+import Link from 'next/link';
+import { FaArrowLeft } from 'react-icons/fa';
 
-export default async function PropertiesPage () {
-    await connectDB(); // Connect to the database
-    const properties = await Property.find({}).lean(); // Fetch properties from the database
-    return ( 
-        <section className='px-4 py-6'>
-            <div className='container-xl lg:container m-auto m-auto px-4 py-6' >
-                {properties.length ===0? (<p>No properties found</p>):(
-                    <div className='gird grid-cols-1 md:grid-cols-3 gap-6'> 
-                    {properties.map((property) => (
-                        <PropertyCard
-                            key={property._id}
-                            property={property}/> // Pass the entire property object as a prop
-                            // onClick={() => handlePropertyClick(property._id)} // If you want to handle clicks on the card
-                            // or you can use the Link component to navigate to the details page
-                    )
-                     
+const PropertyPage = async ({ params }) => {
+  await connectDB();
+  const propertyDoc = await Property.findById(params.id).lean();
+  const property = convertToSerializeableObject(propertyDoc);
 
-                    )}
-                    
-                    </div>
-                )}
-            </div>
-
-
-
-        </section>
-
-
-
+  if (!property) {
+    return (
+      <h1 className='text-center text-2xl font-bold mt-10'>
+        Property Not Found
+      </h1>
     );
-}
- 
- 
+  }
+
+  return (
+    <>
+      <PropertyHeaderImage image={property.images[0]} />
+      <section>
+        <div className='container m-auto py-6 px-6'>
+          <Link
+            href='/properties'
+            className='text-blue-500 hover:text-blue-600 flex items-center'
+          >
+            <FaArrowLeft className='mr-2' /> Back to Properties
+          </Link>
+        </div>
+      </section>
+      <section className='bg-blue-50'>
+        <div className='container m-auto py-10 px-6'>
+          <div className='grid grid-cols-1 md:grid-cols-70/30 w-full gap-6'>
+            <PropertyDetails property={property} />
+
+            {/* <!-- Sidebar --> */}
+            <aside className='space-y-4'>
+              <BookmarkButton property={property} />
+              <ShareButtons property={property} />
+              <PropertyContactForm property={property} />
+            </aside>
+          </div>
+        </div>
+      </section>
+      <PropertyImages images={property.images} />
+    </>
+  );
+};
+export default PropertyPage;
