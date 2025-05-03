@@ -1,57 +1,49 @@
-import PropertyHeaderImage from '@/components/PropertyHeaderImage';
-import PropertyDetails from '@/components/PropertyDetails';
-import connectDB from '@/config/database';
+import PropertyCard from '@/components/PropertyCard';
+import PropertySearchForm from '@/components/PropertySearchForm';
+import Pagination from '@/components/Pagination';
 import Property from '@/models/Property';
-import PropertyImages from '@/components/PropertyImages';
-import BookmarkButton from '@/components/BookmarkButton';
-import ShareButtons from '@/components/ShareButtons';
-import PropertyContactForm from '@/components/PropertyContactForm';
-import { convertToSerializeableObject } from '@/utils/convertToObject';
-import Link from 'next/link';
-import { FaArrowLeft } from 'react-icons/fa';
+import connectDB from '@/config/database';
 
-const PropertyPage = async ({ params }) => {
+const PropertiesPage = async ({ searchParams: { pageSize = 9, page = 1 } }) => {
   await connectDB();
-  const propertyDoc = await Property.findById(params.id).lean();
-  const property = convertToSerializeableObject(propertyDoc);
+  const skip = (page - 1) * pageSize;
 
-  if (!property) {
-    return (
-      <h1 className='text-center text-2xl font-bold mt-10'>
-        Property Not Found
-      </h1>
-    );
-  }
+  const total = await Property.countDocuments({});
+  const properties = await Property.find({}).skip(skip).limit(pageSize);
+
+  // Calculate if pagination is needed
+  const showPagination = total > pageSize;
 
   return (
     <>
-      <PropertyHeaderImage image={property.images[0]} />
-      <section>
-        <div className='container m-auto py-6 px-6'>
-          <Link
-            href='/properties'
-            className='text-blue-500 hover:text-blue-600 flex items-center'
-          >
-            <FaArrowLeft className='mr-2' /> Back to Properties
-          </Link>
+      <section className='bg-blue-700 py-4'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-start'>
+          <PropertySearchForm />
         </div>
       </section>
-      <section className='bg-blue-50'>
-        <div className='container m-auto py-10 px-6'>
-          <div className='grid grid-cols-1 md:grid-cols-70/30 w-full gap-6'>
-            <PropertyDetails property={property} />
-
-            {/* <!-- Sidebar --> */}
-            <aside className='space-y-4'>
-              <BookmarkButton property={property} />
-              <ShareButtons property={property} />
-              <PropertyContactForm property={property} />
-            </aside>
-          </div>
+      <section className='px-4 py-6'>
+        <div className='container-xl lg:container m-auto px-4 py-6'>
+          <h1 className='text-2xl mb-4'>Browse Properties</h1>
+          {properties.length === 0 ? (
+            <p>No properties found</p>
+          ) : (
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+              {properties.map((property, index) => (
+                <PropertyCard property={property} key={index} />
+              ))}
+            </div>
+          )}
+          {showPagination && (
+            <Pagination
+              page={parseInt(page)}
+              pageSize={parseInt(pageSize)}
+              totalItems={total}
+            />
+          )}
         </div>
       </section>
-      <PropertyImages images={property.images} />
     </>
   );
 };
-export default PropertyPage;
+
+export default PropertiesPage;
